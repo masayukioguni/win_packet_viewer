@@ -65,7 +65,7 @@ func broadcastMessage(data WinFormatBson) {
 func main() {
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Use(martini.Static("static"))
+	m.Use(martini.Static("assets"))
 
 	m.Get("/", Index)
 	m.Get("/ws", WebSocket)

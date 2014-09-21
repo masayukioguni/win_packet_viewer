@@ -1,8 +1,83 @@
 <html>
     <body>
         <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+        <link rel="stylesheet" href="http://code.shutterstock.com/rickshaw/rickshaw.min.css">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+        <script src="http://jquery-json.googlecode.com/files/jquery.json-2.2.min.js"></script>
+        <script src="http://code.shutterstock.com/rickshaw/vendor/d3.v2.js"></script>
+        <script src="http://code.shutterstock.com/rickshaw/rickshaw.js"></script>
+        <link type="text/css" rel="stylesheet" href="./rickshaw.css">
+        
+
+        <div id="chart_content">
+          <div id="y_axis"></div>
+          <div id="chart"></div>
+          <div id="legend_container">
+            <div id="legend"></div>
+          </div>
+        </div>
+        
+
         <script>
+        var seriesData = [ ];
+        var palette = new Rickshaw.Color.Palette();
+              var tv = 10;
+              var graph = new Rickshaw.Graph( {
+                element: document.getElementById("chart"),
+                width: 900,
+                height: 500,
+                strokeWidth: 0.5,
+                renderer: 'line',
+                stroke: true,
+                min: 'auto',
+                series: new Rickshaw.Series.FixedDuration([{
+                  name: 'win', 
+                  data:seriesData,
+                  color: palette.color()
+                }], undefined, {
+                  timeInterval: tv * 1000,
+                  maxDataPoints: 100,
+                  timeBase: new Date().getTime() / 1000
+                }) 
+              } );
+
+              var y_axis = new Rickshaw.Graph.Axis.Y( {
+                graph: graph,
+                orientation: 'left',
+                tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+                element: document.getElementById('y_axis'),
+              } );
+              var legend = new Rickshaw.Graph.Legend({
+                graph: graph,
+                element: document.getElementById('legend'),
+              });
+              var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
+                graph: graph,
+                legend: legend
+              });
+              var order = new Rickshaw.Graph.Behavior.Series.Order({
+                graph: graph,
+                legend: legend
+              });
+              var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight({
+                graph: graph,
+                legend: legend
+              });
+              var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+                graph: graph
+              } );
+              var axes = new Rickshaw.Graph.Axis.Time( {
+                graph: graph
+              } );
+
+              graph.render();
+
+
         var c = new WebSocket('ws://127.0.0.1:3000/ws');
+        var last_render = new Date().getTime() / 1000;
+
         c.onopen = function(){
             c.onmessage = function(response){
                 json = $.parseJSON(response.data);
@@ -10,20 +85,19 @@
                 //var newMessage = $('<li>').text(response.data);
                 //$('#messages').append(newMessage);
                 //$('#message').val('');
+
+                var now = new Date().getTime() / 1000;
+                seriesData.push({x:now,y:json.FirstSample})
+                  counter = new Array();
+                  last_render = now;
+
+                  graph.update();
+                  graph.render();
+                  axes.render();
+ 
             };
-           /*
-            $('form').submit(function(){
-                c.send($('#message').val());
-                return false;
-            }
-            );*/
         }
         </script>
-        <ul id=messages></ul>
-        <form>
-            <input id=message>
-            <input type="submit" id=send value=Send>
-        </form>
     </body>
 </html>
 

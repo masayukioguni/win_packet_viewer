@@ -109,14 +109,15 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	c := session.DB("fluent").C("debug.format")
 	result := WinFormatBson{}
 
-	_ = c.Find(bson.M{}).Sort("-_id").One(&result)
+	_ = c.Find(bson.M{"Channel": 1}).Sort("-_id").One(&result)
+	fmt.Println(result)
 	broadcastMessage(result)
-	iter := c.Find(bson.M{"_id": bson.M{"$gt": result.Id}}).Tail(1 * time.Second)
+	iter := c.Find(bson.M{"_id": bson.M{"$gt": result.Id}, "Channel": 1}).Tail(1 * time.Second)
 
 	for {
 		var lastId bson.ObjectId
 		for iter.Next(&result) {
-			fmt.Println(result)
+			//fmt.Println(result)
 			lastId = result.Id
 			broadcastMessage(result)
 		}
@@ -128,7 +129,7 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		if iter.Timeout() {
 			continue
 		}
-		query := c.Find(bson.M{"_id": bson.M{"$gt": lastId}})
+		query := c.Find(bson.M{"_id": bson.M{"$gt": lastId}, "Channel": 1})
 		iter = query.Sort("$natural").Tail(1 * time.Second)
 	}
 	iter.Close()
